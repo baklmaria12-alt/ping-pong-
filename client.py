@@ -49,6 +49,9 @@ wall_sound = mixer.Sound("sounds/submority-boom-geomorphism-cinematic-trailer-so
 platform_sound = mixer.Sound("sounds/universfield-cinematic-impact-hit-352702.mp3")
 
 # --- ЗОБРАЖЕННЯ ----
+#
+ball_img = image.load("images/openclipart-vectors-football-157930_640.png")
+ball_img = transform.scale(ball_img, (40, 40))
 # завантажуємо картинку для фону
 main_background = image.load("images/pexels-cosmos-1853491.jpg").convert()
 main_background = transform.scale(main_background, (WIDTH, HEIGHT))
@@ -121,7 +124,8 @@ while True:
         screen.blit(main_background, (0, 0), )
         draw.rect(screen, (0, 255, 0), (20, game_state['paddles']['0'], 20, 100))
         draw.rect(screen, (255, 0, 255), (WIDTH - 40, game_state['paddles']['1'], 20, 100))
-        draw.circle(screen, (255, 255, 255), (game_state['ball']['x'], game_state['ball']['y']), 10)
+        # draw.circle(screen, (255, 255, 255), (game_state['ball']['x'], game_state['ball']['y']), 10)
+        screen.blit(ball_img, (game_state['ball']['x'] - 10, game_state['ball']['y'] - 10))
         score_text = font_main.render(f"{game_state['scores'][0]} : {game_state['scores'][1]}", True, (255, 255, 255))
         screen.blit(score_text, (WIDTH // 2 -25, 20))
 
