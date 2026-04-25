@@ -2,6 +2,7 @@ from pygame import *
 import socket
 import json
 from threading import Thread
+import time as std_time
 
 # ---ПУГАМЕ НАЛАШТУВАННЯ ---
 WIDTH, HEIGHT = 800, 600
@@ -39,11 +40,24 @@ def receive():
 
 # --- ШРИФТИ ---
 font_win = font.Font(None, 72)
-font_main = font.Font(None, 36)
-# --- ЗОБРАЖЕННЯ ----
+font_main = font.Font("fonts/Pacifico-Regular.ttf", 36)
 
 # --- ЗВУКИ ---
+# ініціалізація звукової системи
+mixer.init()
+wall_sound = mixer.Sound("sounds/submority-boom-geomorphism-cinematic-trailer-sound-effects-123876.mp3")
+platform_sound = mixer.Sound("sounds/universfield-cinematic-impact-hit-352702.mp3")
 
+# --- ЗОБРАЖЕННЯ ----
+# завантажуємо картинку для фону
+main_background = image.load("images/pexels-cosmos-1853491.jpg").convert()
+main_background = transform.scale(main_background, (WIDTH, HEIGHT))
+
+# фон для перемоги та поразки
+win_bg = image. load("images/depositphotos_687471448-stock-illustration-you-win-prize-word-concept.jpg").convert()
+win_bg = transform.scale(win_bg,(WIDTH, HEIGHT))
+lose_bg = image. load ("images/depositphotos_45208547-stock-illustration-you-lose.jpg").convert()
+lose_bg = transform.scale(lose_bg,  (WIDTH, HEIGHT))
 # --- ГРА ---
 game_over = False
 winner = None
@@ -54,6 +68,22 @@ while True:
     for e in event.get():
         if e.type == QUIT:
             exit()
+
+        # для рестарту гри
+        if e.type == KEYDOWN and e.key == K_k:
+            if "winner" in game_state and game_state["winner"] is not None:
+                # Зупиняємо receive() потік
+                game_over = True
+                std_time.sleep(0.15)  # даємо потоку час завершитись
+
+                # Скидаємо стан
+                game_state = {}
+                you_win = None
+                game_over = False
+
+                # Перепідключення і новий потік
+                my_id, game_state, buffer, client = connect_to_server()
+                Thread(target=receive, daemon=True).start()
 
     if "countdown" in game_state and game_state["countdown"] > 0:
         screen.fill((0, 0, 0))
@@ -71,11 +101,10 @@ while True:
             else:
                 you_winner = False
 
-        if you_winner:
-            text = "Ти переміг!"
-        else:
-            text = "Пощастить наступним разом!"
-
+            if you_winner:
+                screen.blit(win_bg, (0, 0))
+            else:
+                screen.blit(lose_bg, (0, 0))
         win_text = font_win.render(text, True, (255, 215, 0))
         text_rect = win_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
         screen.blit(win_text, text_rect)
@@ -88,7 +117,8 @@ while True:
         continue  # Блокує гру після перемоги
 
     if game_state:
-        screen.fill((30, 30, 30))
+        # screen.fill((30, 30, 30))
+        screen.blit(main_background, (0, 0), )
         draw.rect(screen, (0, 255, 0), (20, game_state['paddles']['0'], 20, 100))
         draw.rect(screen, (255, 0, 255), (WIDTH - 40, game_state['paddles']['1'], 20, 100))
         draw.circle(screen, (255, 255, 255), (game_state['ball']['x'], game_state['ball']['y']), 10)
@@ -98,10 +128,10 @@ while True:
         if game_state['sound_event']:
             if game_state['sound_event'] == 'wall_hit':
                 # звук відбиття м'ячика від стін
-                pass
+                wall_sound.play()
             if game_state['sound_event'] == 'platform_hit':
                 # звук відбиття м'ячика від платформи
-                pass
+                platform_sound.play()
 
     else:
         wating_text = font_main.render(f"Очікування гравців...", True, (255, 255, 255))
